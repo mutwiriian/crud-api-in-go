@@ -1,4 +1,4 @@
-# CRUD API IN GO
+# CRUD API IN Go
 To run the code locally run
 ```
 git clone https://github.com/mutwiriian/crud-api-in-go.git
