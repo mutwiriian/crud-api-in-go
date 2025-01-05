@@ -2,21 +2,36 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func ConnectDB() *sql.DB {
-	dsn := "host=172.22.0.1 port=5432 user=postgres password=postgres dbname=customers_crud sslmode=disable"
-	db, err := sql.Open("pgx", dsn)
+	host := os.Getenv("DBHOST")
+	port := os.Getenv("DBPORT")
+	db := os.Getenv("DBNAME")
+	user := os.Getenv("DBUSER")
+	password := os.Getenv("DBPASS")
+
+	if host == "" || port == "" || db == "" || user == "" || password == "" {
+		log.Fatal("All environment variables(DBHOST, DBPORT, DB, DBUSER, DBPASS) must be provided")
+	}
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, db)
+	DB, err := sql.Open("pgx", dsn)
 	if err != nil {
+		log.Fatalf("Unable to connect to database! %v", err)
+	}
+
+	if err := DB.Ping(); err != nil {
 		log.Fatalf("Unable to connect to database! %v", err)
 	}
 
 	log.Println("Connected to database!")
 
-	return db
+	return DB
 }
 
 func CreateCustomersTable(db *sql.DB) {
