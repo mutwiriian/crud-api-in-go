@@ -1,4 +1,4 @@
-module example.com/ecommerce
+module github.com/mutwiriian/crud-api-in-go
 
 go 1.22.2
 

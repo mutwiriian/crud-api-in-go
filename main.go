@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"net/http"
 
-	"example.com/ecommerce/database"
-	"example.com/ecommerce/handlers"
+	"github.com/mutwiriian/crud-api-in-go/database"
+	"github.com/mutwiriian/crud-api-in-go/handlers"
 )
 
 var db *sql.DB

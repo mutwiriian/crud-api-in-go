@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"example.com/ecommerce/models"
+	"github.com/mutwiriian/crud-api-in-go/models"
 )
 
 func CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
