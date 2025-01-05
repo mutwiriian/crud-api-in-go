@@ -1,11 +1,30 @@
 # CRUD API in Go
-To run the code locally run
+To run the code locally:
+
+First,ensure you have a Postgres server running in your system and execute the following:
+```
+create database customers;
+```
+Then run 
 ```
 git clone https://github.com/mutwiriian/crud-api-in-go.git
+cd crud-api-in-go
+```
+Create the environment variables
+```
+export DBHOST=localhost
+export DBPORT=5432
+export DBUSER=<YOUR_PASSWORD>
+export DBPASS=<YOUR_PASSWORD>
+export DBNAME=customers
+```
+Finally run the program
+```
+go run main.go
 ```
 
 ## Examples 
-Try the following commands on a Unix command line to interact with the API
+Try the following at the terminal to interact with the API
 
 ## CREATE Customer
 ```
