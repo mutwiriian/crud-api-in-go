@@ -1,4 +1,4 @@
-# CRUD API in Go
+## CRUD API in Go
 To run the code locally:
 
 First,ensure you have a Postgres server running in your system and execute the following:
@@ -23,7 +23,7 @@ Finally run the program
 go run main.go
 ```
 
-# Examples 
+## Examples 
 Try the following at the terminal to interact with the API
 
 ### CREATE Customer
