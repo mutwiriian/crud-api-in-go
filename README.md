@@ -12,11 +12,11 @@ cd crud-api-in-go
 ```
 Create the environment variables
 ```
-export DBHOST=localhost
-export DBPORT=5432
-export DBUSER=<YOUR_PASSWORD>
-export DBPASS=<YOUR_PASSWORD>
-export DBNAME=customers
+export DBHOST=host       #127.0.0.1
+export DBPORT=port       #5432 
+export DBUSER=user       #postgres
+export DBPASS=password   #postgres
+export DBNAME=name       #customers
 ```
 Finally run the program
 ```
