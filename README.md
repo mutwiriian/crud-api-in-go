@@ -23,7 +23,7 @@ Finally run the program
 go run main.go
 ```
 
-## Examples 
+# Examples 
 Try the following at the terminal to interact with the API
 
 ## CREATE Customer
