@@ -1,7 +1,7 @@
 ## CRUD API in Go
-To run the code locally:
+A Customer management demo API implementing Create, Read, Update and Delete (CRUD) operations.
 
-First,ensure you have a Postgres server running in your system and execute the following:
+To run the code locally first ensure you have a Postgres server running in your system and execute the following:
 ```
 create database customers;
 ```
