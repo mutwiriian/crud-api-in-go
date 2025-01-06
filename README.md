@@ -16,7 +16,7 @@ export DBHOST=host       #127.0.0.1
 export DBPORT=port       #5432 
 export DBUSER=user       #postgres
 export DBPASS=password   #postgres
-export DBNAME=name       #customers_crud
+export DBNAME=dbname       #customers_crud
 ```
 Finally run the program
 ```
