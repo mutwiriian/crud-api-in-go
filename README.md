@@ -10,17 +10,10 @@ Then run
 git clone https://github.com/mutwiriian/crud-api-in-go.git
 cd crud-api-in-go
 ```
-Create the environment variables
+
+Finally run the program by calling the following with your actual credentials for your database
 ```
-export DBHOST=host       #127.0.0.1
-export DBPORT=port       #5432 
-export DBUSER=user       #postgres
-export DBPASS=password   #postgres
-export DBNAME=dbname       #customers_crud
-```
-Finally run the program
-```
-go run main.go
+go run main.go -host="127.0.0.1" -port="5432" -database="customers_crud" -username="postgres" -password="postgres"
 ```
 
 ## Examples 
