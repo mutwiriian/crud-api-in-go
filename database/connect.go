@@ -2,24 +2,25 @@ package database
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
-	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func ConnectDB() *sql.DB {
-	host := os.Getenv("DBHOST")
-	port := os.Getenv("DBPORT")
-	db := os.Getenv("DBNAME")
-	user := os.Getenv("DBUSER")
-	password := os.Getenv("DBPASS")
+var (
+	host     = flag.String("host", "127.0.0.1", "Database host")
+	port     = flag.String("port", "5432", "Port number not in 0-1023")
+	database = flag.String("database", "postgres", "Database name")
+	username = flag.String("username", "postgres", "Database user name")
+	password = flag.String("password", "postgres", "User password")
+)
 
-	if host == "" || port == "" || db == "" || user == "" || password == "" {
-		log.Fatal("All environment variables(DBHOST, DBPORT, DB, DBUSER, DBPASS) must be provided")
-	}
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, db)
+func ConnectDB() *sql.DB {
+	flag.Parse()
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", *host, *port, *username, *password, *database)
 	DB, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatalf("Unable to connect to database! %v", err)
