@@ -37,7 +37,7 @@ curl -X GET http://localhost:8000/customers/get_email?email=imma@yahoo.com
 
 ### UPDATE a Customer
 ```
-curl -X PATCH http://localhost:8000/customers/update?email=imma@yahoo.com -d '{"name":"munene"}'
+curl -X PATCH http://localhost:8000/customers/update?email=imma@yahoo.com -d '{"name":"munene","address","Kenya"}'
 ```
 
 ### DELETE a Customer
