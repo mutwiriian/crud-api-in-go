@@ -53,12 +53,12 @@ func CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		// w.WriteHeader(http.StatusCreated)
 
-		response := map[string]any{
+		response := map[string]string{
 			"status":  "Success",
 			"message": "Customer successfully added!",
 		}
 		json.NewEncoder(w).Encode(response)
-		database.Logger.Info("msg", response["message"], "method", "POST", "path", "/customers/create")
+		database.Logger.Info(response["message"], "method", "POST", "path", "/customers/create")
 	}
 }
 
@@ -243,13 +243,13 @@ func UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
-		response := map[string]any{
+		response := map[string]string{
 			"status":  "Success",
 			"message": "Customer updates successful",
 		}
 
 		json.NewEncoder(w).Encode(response)
-		database.Logger.Info("Customer updates successful", "method", "POST", "path", "/customers/update")
+		database.Logger.Info(response["message"], "method", "POST", "path", "/customers/update")
 	}
 }
 
@@ -304,13 +304,13 @@ func DeleteCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 			database.Logger.Info("Delete operation completed but no rows affected", "method", "DELETE", "path", "/customers/delete_email")
 
 			w.Header().Set("Content-Type", "application/json")
-			response := map[string]any{
+			response := map[string]string{
 				"status":  "success",
 				"message": "Customer successfully deleted",
 			}
 
 			json.NewEncoder(w).Encode(response)
-			database.Logger.Info("Customer successfully deleted", "method", "DELETE", "path", "/customers/delete_email")
+			database.Logger.Info(response["message"], "method", "DELETE", "path", "/customers/delete_email")
 		}
 	}
 }
