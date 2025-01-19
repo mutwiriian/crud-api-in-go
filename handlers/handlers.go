@@ -3,9 +3,9 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 
+	"github.com/mutwiriian/crud-api-in-go/database"
 	"github.com/mutwiriian/crud-api-in-go/models"
 )
 
@@ -18,7 +18,7 @@ func CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadGateway)
 
 			response := map[string]any{
-				"status":  "fail",
+				"status":  "Fail",
 				"message": err.Error(),
 			}
 
@@ -28,15 +28,16 @@ func CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 
 		if customerPayload.Name == "" || customerPayload.Email == "" || customerPayload.Phone_number == "" || customerPayload.Address == "" {
 			w.Header().Set("Content-Type", "application/json")
-			http.Error(w, "All fields must be provided to create customer", http.StatusBadRequest)
-			log.Println("All field must be provided to create customer")
+			msg := "All fields must be provided to create customer"
+			http.Error(w, msg, http.StatusBadRequest)
+			database.Logger.Error(msg)
 			return
 		}
 
 		insertStmt, err := db.Prepare("insert into customers (name, email, phone_number, address) values ($1, $2, $3, $4)")
 		if err != nil {
-			log.Printf("Failed to create SQL statement: %v", err)
-			http.Error(w, "Failed to create SQL statement", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
@@ -44,8 +45,8 @@ func CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 
 		_, err = insertStmt.Exec(customerPayload.Name, customerPayload.Email, customerPayload.Phone_number, customerPayload.Address)
 		if err != nil {
-			log.Printf("Customer creation failed: %v", err)
-			http.Error(w, "Customer creation failed", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
@@ -53,11 +54,11 @@ func CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 		// w.WriteHeader(http.StatusCreated)
 
 		response := map[string]any{
-			"status":  "success",
+			"status":  "Success",
 			"message": "Customer successfully added!",
 		}
 		json.NewEncoder(w).Encode(response)
-		log.Println("Customer successfully added!")
+		database.Logger.Info("msg", response["message"], "method", "POST", "path", "/customers/create")
 	}
 }
 
@@ -65,16 +66,16 @@ func GetCustomersHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		getCustomersStmt, err := db.Prepare("select * from customers")
 		if err != nil {
-			log.Printf("Failed to create SQL statement: %v", err)
-			http.Error(w, "Failed to create SQL statement", http.StatusConflict)
+			http.Error(w, err.Error(), http.StatusConflict)
+			database.Logger.Error(err.Error())
 		}
 
 		defer getCustomersStmt.Close()
 
 		rows, err := getCustomersStmt.Query()
 		if err != nil {
-			log.Printf("Failed to execute statement: %v", err)
-			http.Error(w, "Failed to execute statement", http.StatusConflict)
+			http.Error(w, err.Error(), http.StatusConflict)
+			database.Logger.Error(err.Error())
 			return
 		}
 
@@ -87,8 +88,8 @@ func GetCustomersHandler(db *sql.DB) http.HandlerFunc {
 
 			err := rows.Scan(&customer.Customer_id, &customer.Name, &customer.Email, &customer.Phone_number, &customer.Address)
 			if err != nil {
-				log.Printf("Failed to load customer: %v", err)
-				http.Error(w, "Failed to load customer", http.StatusConflict)
+				http.Error(w, err.Error(), http.StatusConflict)
+				database.Logger.Error(err.Error())
 				return
 			}
 			customers = append(customers, customer)
@@ -96,8 +97,8 @@ func GetCustomersHandler(db *sql.DB) http.HandlerFunc {
 
 		err = rows.Err()
 		if err != nil {
-			log.Printf("An error occurred while fetching customers: %v", err)
-			http.Error(w, "An error occurred while fetching customers", http.StatusConflict)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
@@ -105,10 +106,11 @@ func GetCustomersHandler(db *sql.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]any{
-			"status": "success",
+			"status": "Success",
 			"data":   customers,
 		}
 		json.NewEncoder(w).Encode(response)
+		database.Logger.Info("Customers returned", "method", "GET", "path", "/customers/get_all")
 	}
 }
 
@@ -116,15 +118,15 @@ func GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		customerEmail := r.URL.Query().Get("email")
 		if customerEmail == "" {
-			log.Println("Enter valid customer email")
 			http.Error(w, "Enter valid customer email.", http.StatusBadRequest)
+			database.Logger.Error("Customer email not provided")
 			return
 		}
 
 		searchStmt, err := db.Prepare("select * from customers where email = $1")
 		if err != nil {
-			log.Printf("Failed to define SQL statement: %v", err)
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
@@ -135,12 +137,13 @@ func GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 
 		err = row.Scan(&customer.Customer_id, &customer.Name, &customer.Email, &customer.Address, &customer.Address)
 		if err == sql.ErrNoRows {
-			log.Printf("No customer with given email exists: %v", err)
 			http.Error(w, err.Error(), http.StatusBadGateway)
+			database.Logger.Error(sql.ErrNoRows.Error())
 			return
 		} else if err != nil {
-			log.Printf("An error occurred while finding customer!: %v", err)
-			http.Error(w, "An error occurred while finding customer", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
+
 			return
 		}
 
@@ -152,7 +155,7 @@ func GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 			"data":   customer,
 		}
 		json.NewEncoder(w).Encode(response)
-		log.Println("Customer returned")
+		database.Logger.Info("Customer returned", "method", "GET", "path", "/customers/get_email")
 	}
 }
 
@@ -162,8 +165,8 @@ func UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 
 		searchStmt, err := db.Prepare("select * from customers where email = $1")
 		if err != nil {
-			log.Printf("Failed to prepare SQL statement: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 		var customer models.Customer
@@ -171,12 +174,12 @@ func UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		row := searchStmt.QueryRow(customerEmail)
 		err = row.Scan(&customer.Customer_id, &customer.Name, &customer.Email, &customer.Phone_number, &customer.Address)
 		if err == sql.ErrNoRows {
-			log.Printf("Customer with given email not found: %v", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusNotFound)
+			database.Logger.Error(err.Error())
 			return
 		} else if err != nil {
-			log.Printf("An error occured while fetching customer: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
@@ -184,37 +187,37 @@ func UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 
 		err = json.NewDecoder(r.Body).Decode(&customerPayload)
 		if err != nil {
-			log.Printf("Failed to decode update body: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
 		updateNameStmt, err := db.Prepare("update customers set name =$1 where email=$2")
 		if err != nil {
-			log.Printf("Failed to prepare SQL statement: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
 		updatePhoneNumberStmt, err := db.Prepare("update customers set phone_number =$1 where email=$2")
 		if err != nil {
-			log.Printf("Failed to prepare SQL statement: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
 		updateAddressStmt, err := db.Prepare("update customers set address =$1 where email=$2")
 		if err != nil {
-			log.Printf("Failed to prepare SQL statement: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
 		if customerPayload.Name != "" {
 			_, err := updateNameStmt.Exec(customerPayload.Name, customerEmail)
 			if err != nil {
-				log.Printf("Failed to update %s: %v", customerPayload.Name, err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				database.Logger.Error(err.Error())
 				return
 			}
 		}
@@ -222,8 +225,8 @@ func UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		if customerPayload.Phone_number != "" {
 			_, err := updatePhoneNumberStmt.Exec(customerPayload.Phone_number, customerEmail)
 			if err != nil {
-				log.Printf("Failed to update %s: %v", customerPayload.Phone_number, err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				database.Logger.Error(err.Error())
 				return
 			}
 		}
@@ -231,8 +234,8 @@ func UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		if customerPayload.Address != "" {
 			_, err := updateAddressStmt.Exec(customerPayload.Address, customerEmail)
 			if err != nil {
-				log.Printf("Failed to update %s: %v", customerPayload.Address, err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				database.Logger.Error(err.Error())
 				return
 			}
 		}
@@ -241,12 +244,12 @@ func UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]any{
-			"status":  "success",
+			"status":  "Success",
 			"message": "Customer updates successful",
 		}
 
 		json.NewEncoder(w).Encode(response)
-		log.Println("Customer updates successful")
+		database.Logger.Info("Customer updates successful", "method", "POST", "path", "/customers/update")
 	}
 }
 
@@ -255,8 +258,8 @@ func DeleteCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		customerEmail := r.URL.Query().Get("email")
 		searchStmt, err := db.Prepare("select * from customers where email = $1")
 		if err != nil {
-			log.Printf("Failed to define SQL statement: %v", err)
 			http.Error(w, err.Error(), http.StatusBadGateway)
+			database.Logger.Error(err.Error())
 			return
 		}
 
@@ -265,45 +268,49 @@ func DeleteCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		row := searchStmt.QueryRow(customerEmail)
 		err = row.Scan(&customer.Customer_id, &customer.Name, &customer.Email, &customer.Phone_number, &customer.Address)
 		if err == sql.ErrNoRows {
-			log.Println("No customer with given email found!")
-			http.Error(w, "No customer with given email found!", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		} else if err != nil {
-			log.Printf("An error occurred while fetching customer: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
 			return
 		}
 
 		deleteStmt, err := db.Prepare("delete from customers where email = $1")
 		if err != nil {
-			log.Printf("Failed to define SQL statement: %v", err)
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
+			return
 		}
 
 		res, err := deleteStmt.Exec(customerEmail)
 		if err != nil {
-			log.Printf("An error occured: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
+			return
 		}
+
 		affected, err := res.RowsAffected()
 		if err != nil {
-			log.Printf("An error occured: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			database.Logger.Error(err.Error())
+			return
 		}
 
 		if affected == 0 {
-			log.Printf("No rows affected by delete operation: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			msg := "Now rows affected!"
+			http.Error(w, msg, http.StatusNotFound)
+			database.Logger.Info("Delete operation completed but no rows affected", "method", "DELETE", "path", "/customers/delete_email")
+
+			w.Header().Set("Content-Type", "application/json")
+			response := map[string]any{
+				"status":  "success",
+				"message": "Customer successfully deleted",
+			}
+
+			json.NewEncoder(w).Encode(response)
+			database.Logger.Info("Customer successfully deleted", "method", "DELETE", "path", "/customers/delete_email")
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-
-		response := map[string]any{
-			"status":  "success",
-			"message": "User successfully deleted",
-		}
-
-		json.NewEncoder(w).Encode(response)
-		log.Println("User successfully deleted")
 	}
 }

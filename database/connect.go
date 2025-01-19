@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -17,20 +18,24 @@ var (
 	password = flag.String("password", "postgres", "User password")
 )
 
+var Logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
 func ConnectDB() *sql.DB {
 	flag.Parse()
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", *host, *port, *username, *password, *database)
 	DB, err := sql.Open("pgx", dsn)
 	if err != nil {
-		log.Fatalf("Unable to connect to database! %v", err)
+		Logger.Error(err.Error())
+		os.Exit(1)
 	}
 
 	if err := DB.Ping(); err != nil {
-		log.Fatalf("Unable to connect to database! %v", err)
+		Logger.Error(err.Error())
+		os.Exit(1)
 	}
 
-	log.Println("Connected to database!")
+	Logger.Info("Connected to database!")
 
 	return DB
 }
@@ -47,9 +52,9 @@ func CreateCustomersTable(db *sql.DB) {
   `
 	_, err := db.Exec(stmt)
 	if err != nil {
-		log.Fatalf("Database migration failed: %v", err)
-		return
+		Logger.Error(err.Error())
+		os.Exit(1)
 	}
 
-	log.Println("Database migration successful!")
+	Logger.Info("Database migration successful!")
 }
