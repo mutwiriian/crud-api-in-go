@@ -40,10 +40,7 @@ func CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 		defer insertStmt.Close()
 
 		_, err = insertStmt.Exec(customerPayload.Name, customerPayload.Email, customerPayload.Phone_number, customerPayload.Address)
-		if err != nil {
-			internalServerErrorHandler(w, err, http.StatusInternalServerError)
-			return
-		}
+		internalServerErrorHandler(w, err, http.StatusInternalServerError)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
