@@ -1,4 +1,6 @@
 ## CRUD API in Go
+This application demonstrates how to create a simple API in Go that persists to a database.
+
 To run the code locally:
 
 First,ensure you have a Postgres server running in your system and execute the following:
