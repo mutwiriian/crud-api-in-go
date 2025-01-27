@@ -102,7 +102,10 @@ func GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		searchStmt, err := db.Prepare("select * from customers where email = $1")
-		internalServerErrorHandler(w, err, http.StatusInternalServerError)
+		if err != nil {
+			internalServerErrorHandler(w, err, http.StatusInternalServerError)
+			return
+		}
 
 		defer searchStmt.Close()
 

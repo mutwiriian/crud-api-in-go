@@ -1,7 +1,7 @@
 ## CRUD API in Go
 To run the code locally:
 
-First,ensure you have a Postgres server running in your system and execute the following:
+Fist ensure you have a Postgres server running in your system and execute the following:
 ```
 create database customers;
 ```
@@ -43,4 +43,4 @@ curl -X PATCH http://localhost:8000/customers/update?email=imma@yahoo.com -d '{"
 ### DELETE a Customer
 ```
 curl -X DELETE http://localhost:8000/customers/delete_email?email=imma@yahoo.com
-```
+``
