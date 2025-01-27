@@ -18,29 +18,31 @@ var (
 	password = flag.String("password", "postgres", "User password")
 )
 
-var Logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-
 func ConnectDB() *sql.DB {
 	flag.Parse()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", *host, *port, *username, *password, *database)
 	DB, err := sql.Open("pgx", dsn)
 	if err != nil {
-		Logger.Error(err.Error())
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	if err := DB.Ping(); err != nil {
-		Logger.Error(err.Error())
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	Logger.Info("Connected to database!")
+	logger.Info("Connected to database!")
 
 	return DB
 }
 
 func CreateCustomersTable(db *sql.DB) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
 	stmt := `
   create table if not exists customers (
     id serial primary key,
@@ -52,9 +54,9 @@ func CreateCustomersTable(db *sql.DB) {
   `
 	_, err := db.Exec(stmt)
 	if err != nil {
-		Logger.Error(err.Error())
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	Logger.Info("Database migration successful!")
+	logger.Info("Database migration successful!")
 }
