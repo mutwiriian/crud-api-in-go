@@ -22,15 +22,16 @@ func main() {
 
 	app := &handlers.Application{
 		Logger: logger,
+		DB:     db,
 	}
 
 	r := http.NewServeMux()
 
-	r.HandleFunc("GET /customers/get_all", app.GetCustomersHandler(db))
-	r.HandleFunc("POST /customers/create", app.CreateCustomerHandler(db))
-	r.HandleFunc("GET /customers/get_email", app.GetCustomerByEmailHandler(db))
-	r.HandleFunc("PATCH /customers/update", app.UpdateCustomerByEmailHandler(db))
-	r.HandleFunc("DELETE /customers/delete_email", app.DeleteCustomerByEmailHandler(db))
+	r.HandleFunc("GET /customers/get_all", app.GetCustomersHandler())
+	r.HandleFunc("POST /customers/create", app.CreateCustomerHandler())
+	r.HandleFunc("GET /customers/get_email", app.GetCustomerByEmailHandler())
+	r.HandleFunc("PATCH /customers/update", app.UpdateCustomerByEmailHandler())
+	r.HandleFunc("DELETE /customers/delete_email", app.DeleteCustomerByEmailHandler())
 
 	app.Logger.Info("Starting server at", slog.String("port", "8000"))
 

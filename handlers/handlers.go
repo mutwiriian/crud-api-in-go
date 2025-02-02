@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 
 type Application struct {
 	Logger *slog.Logger
+	DB     *sql.DB
 }
 
 func (app *Application) internalServerErrorHandler(w http.ResponseWriter, err error, code int) {
@@ -20,24 +22,24 @@ func (app *Application) internalServerErrorHandler(w http.ResponseWriter, err er
 	}
 }
 
-func (app *Application) CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
+func (app *Application) CreateCustomerHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var customerPayload models.CreateCustomerSchema
 
 		err := json.NewDecoder(r.Body).Decode(&customerPayload)
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
+			return
 		}
 
 		if customerPayload.Name == "" || customerPayload.Email == "" || customerPayload.Phone_number == "" || customerPayload.Address == "" {
-			w.Header().Set("Content-Type", "application/json")
 			msg := "All fields must be provided to create customer"
 			http.Error(w, msg, http.StatusBadRequest)
 			app.Logger.Error(msg)
 			return
 		}
 
-		insertStmt, err := db.Prepare("insert into customers (name, email, phone_number, address) values ($1, $2, $3, $4)")
+		insertStmt, err := app.DB.Prepare("insert into customers (name, email, phone_number, address) values ($1, $2, $3, $4)")
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
@@ -48,6 +50,7 @@ func (app *Application) CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 		_, err = insertStmt.Exec(customerPayload.Name, customerPayload.Email, customerPayload.Phone_number, customerPayload.Address)
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
+			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -59,9 +62,9 @@ func (app *Application) CreateCustomerHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func (app *Application) GetCustomersHandler(db *sql.DB) http.HandlerFunc {
+func (app *Application) GetCustomersHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		getCustomersStmt, err := db.Prepare("select * from customers")
+		getCustomersStmt, err := app.DB.Prepare("select * from customers")
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
@@ -108,7 +111,7 @@ func (app *Application) GetCustomersHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func (app *Application) GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
+func (app *Application) GetCustomerByEmailHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		customerEmail := r.URL.Query().Get("email")
 
@@ -118,7 +121,7 @@ func (app *Application) GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		searchStmt, err := db.Prepare("select * from customers where email = $1")
+		searchStmt, err := app.DB.Prepare("select * from customers where email = $1")
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
@@ -131,7 +134,7 @@ func (app *Application) GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		var customer models.Customer
 
 		err = row.Scan(&customer.Customer_id, &customer.Name, &customer.Email, &customer.Address, &customer.Address)
-		if err != nil && err.Error() == " no rows in result set" {
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
 		}
@@ -148,7 +151,7 @@ func (app *Application) GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func (app *Application) UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
+func (app *Application) UpdateCustomerByEmailHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		customerEmail := r.URL.Query().Get("email")
 
@@ -160,7 +163,7 @@ func (app *Application) UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFun
 			return
 		}
 
-		searchStmt, err := db.Prepare("select * from customers where email = $1")
+		searchStmt, err := app.DB.Prepare("select * from customers where email = $1")
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
@@ -182,7 +185,7 @@ func (app *Application) UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFun
 			return
 		}
 
-		tx, err := db.Begin()
+		tx, err := app.DB.Begin()
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
@@ -254,11 +257,11 @@ func (app *Application) UpdateCustomerByEmailHandler(db *sql.DB) http.HandlerFun
 	}
 }
 
-func (app *Application) DeleteCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
+func (app *Application) DeleteCustomerByEmailHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		customerEmail := r.URL.Query().Get("email")
 
-		searchStmt, err := db.Prepare("select * from customers where email = $1")
+		searchStmt, err := app.DB.Prepare("select * from customers where email = $1")
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
@@ -273,7 +276,7 @@ func (app *Application) DeleteCustomerByEmailHandler(db *sql.DB) http.HandlerFun
 			return
 		}
 
-		deleteStmt, err := db.Prepare("delete from customers where email = $1")
+		deleteStmt, err := app.DB.Prepare("delete from customers where email = $1")
 		if err != nil {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
