@@ -131,7 +131,7 @@ func (app *Application) GetCustomerByEmailHandler(db *sql.DB) http.HandlerFunc {
 		var customer models.Customer
 
 		err = row.Scan(&customer.Customer_id, &customer.Name, &customer.Email, &customer.Address, &customer.Address)
-		if err != nil || err.Error() == " no rows in result set" {
+		if err != nil && err.Error() == " no rows in result set" {
 			app.internalServerErrorHandler(w, err, http.StatusInternalServerError)
 			return
 		}
